@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { AuthContext } from '../context/AuthContext.jsx';
 import Logout from '../components/Logout';
+import { Pencil, TrendingUp, PieChart, Brain, Plus, ArrowRight } from 'lucide-react';
 import {Trash, Pencil, TrendingUp, PieChart, Brain, Plus, ArrowRight } from 'lucide-react';
 
 const Dashboard = () => {
@@ -26,6 +27,30 @@ const Dashboard = () => {
             'Content-Type': 'application/json',
           },
         });
+        const data = await response.json();
+        console.log(data);
+        setdata(data);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+      } catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+      }
+    };
+    fetchExpenses();
+  }, []);
+
+  // Calculate summary data
+  const totalSpent = data.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+  const categorySpending = data.reduce((acc, expense) => {
+    acc[expense.category] = (acc[expense.category] || 0) + parseFloat(expense.amount);
+    return acc;
+  }, {});
+  
+  const highestCategory = Object.entries(categorySpending).reduce((max, [category, amount]) => 
+    amount > max.amount ? { category, amount } : max, 
+    { category: 'No data', amount: 0 }
+  );
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -123,6 +148,7 @@ const Dashboard = () => {
               </div>
             </div>
             <p className="text-3xl font-bold text-white font-['Poppins'] mb-2">
+              ${totalSpent.toFixed(2)}
               ₹{totalSpent.toFixed(2)}
             </p>
             <p className="text-white/40 text-sm">Across {data.length} transactions</p>
@@ -139,6 +165,7 @@ const Dashboard = () => {
             <p className="text-2xl font-bold text-white font-['Poppins'] mb-2">
               {highestCategory.category}
             </p>
+            <p className="text-white/40 text-sm">${highestCategory.amount.toFixed(2)} spent</p>
             <p className="text-white/40 text-sm">₹{highestCategory.amount.toFixed(2)} spent</p>
           </div>
 
@@ -151,6 +178,7 @@ const Dashboard = () => {
               </div>
             </div>
             <p className="text-3xl font-bold text-white font-['Poppins'] mb-2">
+              ${(totalSpent * 1.1).toFixed(2)}
               ₹{(totalSpent * 1.1).toFixed(2)}
             </p>
             <p className="text-white/40 text-sm">Based on your spending pattern</p>
@@ -168,6 +196,7 @@ const Dashboard = () => {
                 {Object.entries(categorySpending).slice(0, 5).map(([category, amount], index) => (
                   <div key={category} className="flex items-center justify-between">
                     <span className="text-white/80 text-sm">{category}</span>
+                    <span className="text-white font-medium">${amount.toFixed(2)}</span>
                     <span className="text-white font-medium">₹{amount.toFixed(2)}</span>
                   </div>
                 ))}
@@ -178,6 +207,7 @@ const Dashboard = () => {
             <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-2xl">
               <h3 className="text-white font-bold mb-4 font-['Poppins']">Spending Trend</h3>
               <div className="text-white/60 text-sm">
+                <p>Weekly average: ${(totalSpent / 4).toFixed(2)}</p>
                 <p>Weekly average: ₹{(totalSpent / 4).toFixed(2)}</p>
                 <p className="mt-2">Peak spending day: Friday</p>
               </div>
@@ -224,6 +254,10 @@ const Dashboard = () => {
                   data.slice(0, 5).map(expense => (
                     <tr key={expense._id} className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200">
                       <td className="py-4 px-6 text-white/90">
+                        {new Date(expense.date).toLocaleDateString()}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
                         {new Date(expense.date).toLocaleDateString('en-GB')}
                       </td>
                       <td className="py-4 px-6">
@@ -232,6 +266,7 @@ const Dashboard = () => {
                         </span>
                       </td>
                       <td className="py-4 px-6 text-white font-medium">
+                        ${parseFloat(expense.amount).toFixed(2)}
                         ₹{parseFloat(expense.amount).toFixed(2)}
                       </td>
                       <td className="py-4 px-6 text-white/70">
@@ -240,6 +275,10 @@ const Dashboard = () => {
                       <td className="py-4 px-6">
                         <a 
                           href={`/edit/${expense._id}`}
+                          className="inline-flex items-center justify-center w-8 h-8 bg-white/10 rounded-lg hover:bg-white/20 transition-colors duration-200"
+                        >
+                          <Pencil className="w-4 h-4 text-white/70" />
+                        </a>
                           className="inline-flex items-center justify-center w-8 h-8 bg-white/10 rounded-lg hover:bg-white/20 transition-colors duration-200 mr-3"
                         >
                           <Pencil className="w-4 h-4 text-white/70" />
